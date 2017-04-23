@@ -16,13 +16,13 @@ import java.util.Arrays;
  */
 public class main {
     
-    final static String filename = "src/inputs/tmp";
+    //final static String filename = "src/inputs/tmp";
     
     public static void main(String[] args) throws FileNotFoundException, IloException{
         Generateur generateur = new Generateur(80);
         Plan p = generateur.newInstance();
-        System.out.println(p.toString());
-        p.writeInFile(filename);
+        //System.out.println(p.toString());
+        //p.writeInFile(filename);
         
         long startTime, stopTime;
         startTime = System.currentTimeMillis();
