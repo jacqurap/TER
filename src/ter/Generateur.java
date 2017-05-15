@@ -17,14 +17,16 @@ public class Generateur {
     private int T;
     Random rand;
     private int d[] = {1,2,3,4,5,6,7,8,9,1,2,3,4,5,6,7,8,9,15,20,25,35};
+    private int seed;
     
     public Generateur(){
         this(40);
     }
     public Generateur(int t){
         rand = new Random();
-        int seed = rand.nextInt();
-        System.out.println("seed = " + seed);
+        seed = rand.nextInt();
+        if(main.AFFICHAGE)
+            System.out.println("seed = " + seed);
         rand = new Random(seed);
         T = t;
     }
@@ -42,4 +44,11 @@ public class Generateur {
         return plan;
     }
     
+    public void setT(int T){
+        this.T = T;
+    }
+    
+    public int getSeed(){
+        return seed;
+    }
 }

@@ -13,7 +13,7 @@ import ilog.cplex.*;
  */
 public class PLNE {
     
-    public static long model(Plan p) throws IloException{
+    public static long model(Plan p, boolean stockFinal) throws IloException{
         
         IloCplex cplex = new IloCplex();
         
@@ -57,7 +57,8 @@ public class PLNE {
         
         
         // stock final nul
-        cplex.addEq(I[p.T-1], 0); // a suprimmer si l'on accepte un stock en final
+        if(stockFinal)
+            cplex.addEq(I[p.T-1], 0); // a suprimmer si l'on accepte un stock en final
         
         cplex.setParam(IloCplex.Param.MIP.Display, 0);
         
@@ -65,18 +66,20 @@ public class PLNE {
         //solve
         if(cplex.solve()){
             long resultat = Math.round(cplex.getObjValue());
-            System.out.println("objectif = " + resultat);
-            System.out.print("X = [");
-            for(int i = 0; i<p.T; i++){
-                System.out.print(Math.round(cplex.getValue(X[i]) )+ ", ");
+            if (main.AFFICHAGE){
+                System.out.println("objectif = " + resultat);
+                System.out.print("X = [");
+                for(int i = 0; i<p.T; i++){
+                    System.out.print(Math.round(cplex.getValue(X[i]) )+ ", ");
+                }
+                System.out.println("]");
+                System.out.print("I = [");
+                for(int i = 0; i<p.T; i++){
+                    System.out.print(Math.round(cplex.getValue(I[i])) + ", ");
+                }
+
+                System.out.println("]");
             }
-            System.out.println("]");
-            System.out.print("I = [");
-            for(int i = 0; i<p.T; i++){
-                System.out.print(Math.round(cplex.getValue(I[i])) + ", ");
-            }
-            
-            System.out.println("]");
             return resultat;
         }
         

@@ -13,10 +13,10 @@ import java.util.Arrays;
  */
 public class Solver {
 
-    public static int findL(int[] U, int[] D, int[] X, int L, int v, int eps) {
+    public static long findL(int[] U, int[] D, int[] X, int L, int v, int eps) {
         int DtoV = 0;
         int nextL = eps;
-        int c = 0;
+        long c = 0;
 
         for (int i = v; i >= 0; i--) {
             DtoV += D[i];
@@ -35,12 +35,12 @@ public class Solver {
             c += DtoV;
         }
         if (DtoV > 0) {
-            return Integer.MAX_VALUE / 2;
+            return Long.MAX_VALUE / 2;
         }
         return c;
     }
 
-    public static int rec(int[] U, int[] D, int[] X, int L, int v) {
+    public static long rec(int[] U, int[] D, int[] X, int L, int v) {
 
         int dv = D[v];
         int Dtot = 0;
@@ -64,7 +64,7 @@ public class Solver {
         if (dv <= L) {
             X[v] = 0;
             D[v - 1] += dv;
-            int c = rec(U, D, X, L, v - 1) + dv;
+            long c = rec(U, D, X, L, v - 1) + dv;
             D[v - 1] -= dv;
             return c;
         } else if (dv <= U[v]) {
@@ -72,11 +72,11 @@ public class Solver {
         } else { //dv > Uv
             // soit Xv < Uv
             int eps = (Dtot % L) + L;
-            int c1 = findL(U, D, X, L, v, eps);
+            long c1 = findL(U, D, X, L, v, eps);
             // soit Xv = Uv
             D[v - 1] += dv - U[v];
             X[v] = U[v];
-            int c2 = rec(U, D, X, L, v - 1) + dv - U[v];
+            long c2 = rec(U, D, X, L, v - 1) + dv - U[v];
             D[v - 1] += U[v] - dv;
             if (c1 <= c2) {
                 return findL(U, D, X, L, v, L + (Dtot % L)); //je le refais pour que les X de sortie soient les bons
@@ -86,10 +86,10 @@ public class Solver {
         }
     }
 
-    public static int slove(Plan p) {
+    public static long slove(Plan p, boolean bool) {
         int[] X = new int[p.T];
 
-        int[] cost = new int[p.T + 1];
+        long[] cost = new long[p.T + 1];
         for (int i = 0; i < p.T + 1; i++) {
             cost[i] = Integer.MAX_VALUE;
         }
@@ -102,14 +102,29 @@ public class Solver {
         int[] tmpU = new int[p.T];
         int[] tmpX = new int[p.T];
 
-        int c = 0;
+        long c = 0;
+        long c2 = 0;
         for (int u = 0; u < p.T; u++) {
             if (cost[u] < Integer.MAX_VALUE / 2) {
                 for (int v = u; v < p.T; v++) {
                     System.arraycopy(p.d, u, tmpD, 0, v - u + 1);
                     System.arraycopy(p.U, u, tmpU, 0, v - u + 1);
                     System.arraycopy(X, u, tmpX, 0, v - u + 1);
-                    c = rec(tmpU, tmpD, tmpX, p.L, v - u);
+                    c = rec(tmpU, tmpD, tmpX, p.L, v - u); //calculer le cout de ce sous-plan
+                    if (v == p.T - 1) { //si le sous-plan est terminal
+                        //on calcul aussi si le stock final n'est pas nul
+                        int Dtot = 0;
+                        for (int i = u; i <= v; i++) {
+                            Dtot += p.d[i];
+                        }
+                        System.arraycopy(p.d, u, tmpD, 0, v - u + 1);
+                        System.arraycopy(p.U, u, tmpU, 0, v - u + 1);
+                        System.arraycopy(X, u, tmpX, 0, v - u + 1);
+                        int Ifinal = p.L - Dtot % p.L;
+                        tmpD[v - u] += Ifinal;
+                        c2 = findL(tmpU, tmpD, tmpX, p.L, v - u, p.L) + Ifinal;
+                        c=Math.min(c, c2);
+                    }
                     if (c < Integer.MAX_VALUE / 2) {
                         if (cost[v + 1] > (cost[u] + c)) {
                             cost[v + 1] = cost[u] + c;
@@ -119,25 +134,31 @@ public class Solver {
                 }
             }
         }
-        System.out.println("cout final : " + cost[p.T]);
-        System.out.println("cost : " + Arrays.toString(cost));
-        System.out.println("path : " + Arrays.toString(path));
-
-        if (cost[p.T] < Integer.MAX_VALUE / 2) {
-            //reconstruction de la solution
-            int v = p.T;
-            int u;
-            while (v > 0) {
-                u = path[v];
-                System.arraycopy(p.d, u, tmpD, 0, v - u);
-                System.arraycopy(p.U, u, tmpU, 0, v - u);
-                System.arraycopy(X, u, tmpX, 0, v - u);
-                rec(tmpU, tmpD, tmpX, p.L, v - u - 1);
-                System.arraycopy(tmpX, 0, X, u, v - u);
-                v = u;
-            }
-            System.out.println("X : " + Arrays.toString(X));
+        if(main.AFFICHAGE){
+            System.out.println("cout final : " + cost[p.T]);
+            System.out.println("cost : " + Arrays.toString(cost));
+            System.out.println("path : " + Arrays.toString(path));
         }
-        return (cost[p.T]);
+        if (cost[p.T] < Integer.MAX_VALUE / 2) {
+            if(main.AFFICHAGE){
+                //reconstruction de la solution
+                int v = p.T;
+                int u;
+                while (v > 0) {
+                    u = path[v];
+                    System.arraycopy(p.d, u, tmpD, 0, v - u);
+                    System.arraycopy(p.U, u, tmpU, 0, v - u);
+                    System.arraycopy(X, u, tmpX, 0, v - u);
+                    rec(tmpU, tmpD, tmpX, p.L, v - u - 1);
+                    System.arraycopy(tmpX, 0, X, u, v - u);
+                    v = u;
+                }
+                System.out.println("X : " + Arrays.toString(X));
+            }
+            return (cost[p.T]);
+        }
+        else{
+            return (-1);
+        }
     }
 }
